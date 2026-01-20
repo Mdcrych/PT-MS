@@ -17,12 +17,12 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 excel_path = r"data/data.xls"
-sheet_index = 22
-use_col = 0
+sheet_index = 21  # начинается с 0 => для 22 листа берем индекс 21
+use_col = 4
 
 try:
     col = pd.read_excel(excel_path, sheet_name=sheet_index, usecols=[use_col])
-    series = pd.to_numeric(col.iloc[:, 0], errors="coerce").dropna().astype(float)
+    series = pd.to_numeric(col.iloc[:, 0], errors="coerce").astype(float)
     data = np.array(series.tolist())
 except Exception as e:
     logger.error(f"Ошибка чтения файла: {e}")
@@ -50,10 +50,10 @@ logger.info("\n1. ВЫБОРОЧНОЕ СРЕДНЕЕ:")
 logger.info("   Формула: x̄ = (1/n) · Σxᵢ")
 logger.info(f"   Расчёт:  x̄ = (1/{n}) · {np.sum(data):.4f} = {mean_x:.4f}")
 
-# Выборочная дисперсия (несмещённая)
+# Выборочная дисперсия
 # Формула: S² = (1/(n-1)) * Σ(xᵢ - x̄)² = np.var(data, ddof=1)
 var_x = np.var(data, ddof=1)
-logger.info("\n2. ВЫБОРОЧНАЯ ДИСПЕРСИЯ (несмещённая):")
+logger.info("\n2. ВЫБОРОЧНАЯ ДИСПЕРСИЯ:")
 logger.info("   Формула: S² = (1/(n-1)) · Σ(xᵢ - x̄)²")
 logger.info(f"   Расчёт:  S² = (1/{n - 1}) · {np.sum((data - mean_x) ** 2):.4f} = {var_x:.4f}")
 
@@ -65,41 +65,41 @@ logger.info("   Формула: S = √S²")
 logger.info(f"   Расчёт:  S = √{var_x:.4f} = {std_x:.4f}")
 
 # Медиана
-# Формула: Me = x₍ₙ/₂₎ при нечётном n, или (x₍ₙ/₂₎ + x₍ₙ/₂+₁₎)/2 при чётном
+# Формула: x₍med₎ = x₍ₙ/₂₎ при нечётном n, или (x₍ₙ/₂₎ + x₍ₙ/₂+₁₎)/2 при чётном
 # Используем: np.median(data)
 median_x = np.median(data)
 sorted_data = np.sort(data)
 logger.info("\n4. МЕДИАНА:")
-logger.info("   Формула: Me = x₍(n+1)/2₎ (нечётное n) или (x₍n/2₎ + x₍n/2+1₎)/2 (чётное n)")
+logger.info("   Формула: x₍med₎ = x₍(n+1)/2₎ (нечётное n) или (x₍n/2₎ + x₍n/2+1₎)/2 (чётное n)")
 if n % 2 == 1:
-    logger.info(f"   Расчёт:  Me = x₍{(n + 1) // 2}₎ = {median_x:.4f}")
+    logger.info(f"   Расчёт:  x₍med₎ = x₍{(n + 1) // 2}₎ = {median_x:.4f}")
 else:
-    logger.info(f"   Расчёт:  Me = (x₍{n // 2}₎ + x₍{n // 2 + 1}₎)/2 = ({sorted_data[n // 2 - 1]:.4f} + {sorted_data[n // 2]:.4f})/2 = {median_x:.4f}")
+    logger.info(f"   Расчёт:  x₍med₎ = (x₍{n // 2}₎ + x₍{n // 2 + 1}₎)/2 = ({sorted_data[n // 2 - 1]:.4f} + {sorted_data[n // 2]:.4f})/2 = {median_x:.4f}")
 
 # Центральные моменты 3-го и 4-го порядка
-# m₃ = (1/n) * Σ(xᵢ - x̄)³ = np.mean((data - mean_x)**3)
-# m₄ = (1/n) * Σ(xᵢ - x̄)⁴ = np.mean((data - mean_x)**4)
+# µ₃ = (1/n) * Σ(xᵢ - x̄)³ = np.mean((data - mean_x)**3)
+# µ₄ = (1/n) * Σ(xᵢ - x̄)⁴ = np.mean((data - mean_x)**4)
 m3 = np.mean((data - mean_x) ** 3)
 m4 = np.mean((data - mean_x) ** 4)
 
 # Коэффициент асимметрии
-# Формула: Aₛ = m₃ / S³ = np.mean((data - mean_x)**3) / np.std(data, ddof=0)**3
+# Формула: k₍as₎ = µ₃ / S³ = np.mean((data - mean_x)**3) / np.std(data, ddof=0)**3
 # Примечание: для коэффициентов используем смещённое СКО (ddof=0)
 std_biased = np.std(data, ddof=0)
 As = m3 / (std_biased**3) if std_biased != 0 else 0
 logger.info("\n5. КОЭФФИЦИЕНТ АСИММЕТРИИ:")
-logger.info("   Формула: Aₛ = m₃ / σ³, где m₃ = (1/n)·Σ(xᵢ - x̄)³, σ = √[(1/n)·Σ(xᵢ - x̄)²]")
-logger.info(f"   Расчёт:  m₃ = {m3:.6f}")
+logger.info("   Формула: k₍as₎ = µ₃ / σ³, где µ₃ = (1/n)·Σ(xᵢ - x̄)³, σ = √[(1/n)·Σ(xᵢ - x̄)²]")
+logger.info(f"   Расчёт:  µ₃ = {m3:.6f}")
 logger.info(f"            σ = {std_biased:.4f}")
-logger.info(f"            Aₛ = {m3:.6f} / {std_biased**3:.6f} = {As:.4f}")
+logger.info(f"            k₍as₎ = {m3:.6f} / {std_biased**3:.6f} = {As:.4f}")
 
 # Коэффициент эксцесса
-# Формула: Eₓ = m₄ / S⁴ - 3 = np.mean((data - mean_x)**4) / np.std(data, ddof=0)**4 - 3
+# Формула: k₍ex₎ = µ₄ / S⁴ - 3 = np.mean((data - mean_x)**4) / np.std(data, ddof=0)**4 - 3
 Ex = (m4 / (std_biased**4) - 3) if std_biased != 0 else 0
 logger.info("\n6. КОЭФФИЦИЕНТ ЭКСЦЕССА:")
-logger.info("   Формула: Eₓ = m₄ / σ⁴ - 3, где m₄ = (1/n)·Σ(xᵢ - x̄)⁴")
-logger.info(f"   Расчёт:  m₄ = {m4:.6f}")
-logger.info(f"            Eₓ = {m4:.6f} / {std_biased**4:.6f} - 3 = {Ex:.4f}")
+logger.info("   Формула: k₍as₎ = µ₄ / σ⁴ - 3, где µ₄ = (1/n)·Σ(xᵢ - x̄)⁴")
+logger.info(f"   Расчёт:  µ₄ = {m4:.6f}")
+logger.info(f"            k₍as₎ = {m4:.6f} / {std_biased**4:.6f} - 3 = {Ex:.4f}")
 
 # Дополнительные характеристики выборки
 x_min = np.min(data)
@@ -109,7 +109,7 @@ logger.info(f"   Минимум: x_min = {x_min:.4f}")
 logger.info(f"   Максимум: x_max = {x_max:.4f}")
 logger.info(f"   Размах: R = x_max - x_min = {x_max - x_min:.4f}")
 
-# --- 7.2 Сводная таблица выборочных характеристик ---
+# --- Сводная таблица выборочных характеристик ---
 logger.info("\n--- СВОДНАЯ ТАБЛИЦА ВЫБОРОЧНЫХ ХАРАКТЕРИСТИК ---")
 logger.info(f"{'Характеристика':<25} | {'Значение':>12}")
 logger.info("-" * 42)
@@ -117,24 +117,24 @@ logger.info(f"{'Объём выборки (n)':<25} | {n:>12}")
 logger.info(f"{'Среднее (x̄)':<25} | {mean_x:>12.4f}")
 logger.info(f"{'Дисперсия (S²)':<25} | {var_x:>12.4f}")
 logger.info(f"{'СКО (S)':<25} | {std_x:>12.4f}")
-logger.info(f"{'Медиана (Me)':<25} | {median_x:>12.4f}")
-logger.info(f"{'Асимметрия (Aₛ)':<25} | {As:>12.4f}")
-logger.info(f"{'Эксцесс (Eₓ)':<25} | {Ex:>12.4f}")
+logger.info(f"{'Медиана (x₍med₎)':<25} | {median_x:>12.4f}")
+logger.info(f"{'Асимметрия (k₍as₎)':<25} | {As:>12.4f}")
+logger.info(f"{'Эксцесс (k₍ex₎)':<25} | {Ex:>12.4f}")
 logger.info(f"{'Минимум':<25} | {x_min:>12.4f}")
 logger.info(f"{'Максимум':<25} | {x_max:>12.4f}")
 
-# --- 7.3 Построение гистограммы относительных частот ---
+# --- 7.2 Построение гистограммы относительных частот ---
 logger.info("\n--- 7.2 ГИСТОГРАММА ОТНОСИТЕЛЬНЫХ ЧАСТОТ ---")
 
-# Число интервалов по формуле Стёрджеса: k = [log₂(n)] + 1 = int(np.log2(n)) + 1
+# Число интервалов по формуле Стэрджеса: k = [log₂(n)] + 1 = int(np.log2(n)) + 1
 k_sturges = int(np.log2(n)) + 1
-logger.info(f"Число интервалов (формула Стёрджеса): k = [log₂({n})] + 1 = {k_sturges}")
+logger.info(f"Число интервалов (формула Стэрджеса): k = [log₂({n})] + 1 = {k_sturges}")
 
 # Построение гистограммы
-fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+fig, axes = plt.subplots(1, 1, figsize=(10, 5))
 
 # Гистограмма относительных частот (density=False, weights для относительных частот)
-counts, bins, _ = axes[0].hist(
+counts, bins, _ = axes.hist(
     data,
     bins=k_sturges,
     weights=np.ones(n) / n,  # Относительные частоты (сумма = 1)
@@ -142,19 +142,10 @@ counts, bins, _ = axes[0].hist(
     color="steelblue",
     alpha=0.7,
 )
-axes[0].set_xlabel("x", fontsize=11)
-axes[0].set_ylabel("Относительная частота (nᵢ/n)", fontsize=11)
-axes[0].set_title("Гистограмма относительных частот", fontsize=12)
-axes[0].grid(True, alpha=0.3)
-
-# Гистограмма плотности (для сравнения с теоретическими распределениями)
-counts_density, _, _ = axes[1].hist(
-    data, bins=k_sturges, density=True, edgecolor="black", color="skyblue", alpha=0.7
-)
-axes[1].set_xlabel("x", fontsize=11)
-axes[1].set_ylabel("Плотность вероятности f(x)", fontsize=11)
-axes[1].set_title("Гистограмма (плотность) для сравнения с распределениями", fontsize=12)
-axes[1].grid(True, alpha=0.3)
+axes.set_xlabel("x", fontsize=11)
+axes.set_ylabel("Относительная частота (nᵢ/n)", fontsize=11)
+axes.set_title("Гистограмма относительных частот", fontsize=12)
+axes.grid(True, alpha=0.3)
 
 plt.tight_layout()
 fig.savefig("histogram_task7.png", dpi=150)
@@ -162,14 +153,14 @@ plt.close(fig)
 logger.info("-> Гистограмма сохранена в 'histogram_task7.png'")
 
 # Таблица интервалов и частот
-logger.info(f"\n{'Интервал':<20} | {'nᵢ':<6} | {'Отн.частота':<12} | {'Плотность':<12}")
+logger.info(f"\n{'Интервал':<20} | {'nᵢ':<6} | {'Отн.частота':<12}")
 logger.info("-" * 60)
 bin_width = bins[1] - bins[0]
 for i in range(k_sturges):
     ni = int(counts[i] * n + 0.5)  # Восстанавливаем абсолютную частоту
-    logger.info(f"[{bins[i]:7.3f}; {bins[i + 1]:7.3f}) | {ni:<6} | {counts[i]:<12.4f} | {counts_density[i]:<12.4f}")
+    logger.info(f"[{bins[i]:7.3f}; {bins[i + 1]:7.3f}) | {ni:<6} | {counts[i]:<12.4f}")
 
-# --- 7.4 Теоретические характеристики распределений F1-F4 ---
+# --- 7.3 Теоретические характеристики распределений F1-F4 ---
 logger.info("\n--- 7.3 ТЕОРЕТИЧЕСКИЕ ХАРАКТЕРИСТИКИ РАСПРЕДЕЛЕНИЙ ---")
 
 logger.info("\n╔════════════════════════════════════════════════════════════════════╗")
@@ -180,35 +171,35 @@ logger.info("╠═════════════════════�
 logger.info("║ F1: НОРМАЛЬНОЕ N(a, σ²)                                            ║")
 logger.info("║     f(x) = (1/√(2πσ²)) · exp(-(x-a)²/(2σ²)), x ∈ ℝ                 ║")
 logger.info("║     Теор. характеристики:                                          ║")
-logger.info("║       E[X] = a,  D[X] = σ²,  Aₛ = 0,  Eₓ = 0                       ║")
+logger.info("║       M[X] = a,  D[X] = σ²,  k₍as₎ = 0,  k₍ex₎ = 0                       ║")
 logger.info("╠════════════════════════════════════════════════════════════════════╣")
 
 # F2: Равномерное на [-1, 2θ]
 logger.info("║ F2: РАВНОМЕРНОЕ U(-1, 2θ)                                          ║")
 logger.info("║     f(x) = 1/(2θ+1), x ∈ [-1, 2θ]                                  ║")
 logger.info("║     Теор. характеристики:                                          ║")
-logger.info("║       E[X] = (2θ-1)/2 = θ - 0.5                                    ║")
+logger.info("║       M[X] = (2θ-1)/2 = θ - 0.5                                    ║")
 logger.info("║       D[X] = (2θ+1)²/12                                            ║")
-logger.info("║       Aₛ = 0,  Eₓ = -1.2                                           ║")
+logger.info("║       k₍as₎ = 0,  k₍ex₎ = -1.2                                           ║")
 logger.info("╠════════════════════════════════════════════════════════════════════╣")
 
 # F3: Гамма (Эрланга 2-го порядка)
 logger.info("║ F3: ГАММА-РАСПРЕДЕЛЕНИЕ (Эрланга k=2)                              ║")
 logger.info("║     f(x) = θ²·x·e^(-θx), x ≥ 0                                     ║")
 logger.info("║     Теор. характеристики:                                          ║")
-logger.info("║       E[X] = 2/θ,  D[X] = 2/θ²                                     ║")
-logger.info("║       Aₛ = √2 ≈ 1.414,  Eₓ = 3                                     ║")
+logger.info("║       M[X] = 2/θ,  D[X] = 2/θ²                                     ║")
+logger.info("║       k₍as₎ = √2 ≈ 1.414,  k₍ex₎ = 3                                     ║")
 logger.info("╠════════════════════════════════════════════════════════════════════╣")
 
 # F4: Степенное на [0, θ]
 logger.info("║ F4: СТЕПЕННОЕ (линейное) на [0, θ]                                 ║")
 logger.info("║     f(x) = 2x/θ², x ∈ [0, θ]                                       ║")
 logger.info("║     Теор. характеристики:                                          ║")
-logger.info("║       E[X] = 2θ/3,  D[X] = θ²/18                                   ║")
-logger.info("║       Aₛ ≈ -0.566,  Eₓ ≈ -0.6                                      ║")
+logger.info("║       M[X] = 2θ/3,  D[X] = θ²/18                                   ║")
+logger.info("║       k₍as₎ ≈ -0.566,  k₍ex₎ ≈ -0.6                                      ║")
 logger.info("╚════════════════════════════════════════════════════════════════════╝")
 
-# --- 7.5 Оценка параметров для каждого распределения ---
+# --- 7.4 Оценка параметров для каждого распределения ---
 logger.info("\n--- 7.4 ОЦЕНКА ПАРАМЕТРОВ И СРАВНЕНИЕ ХАРАКТЕРИСТИК ---")
 
 # Для F1: a = x̄, σ² = S²
@@ -217,19 +208,19 @@ sigma2_f1 = var_x
 As_f1_theor = 0
 Ex_f1_theor = 0
 
-# Для F2: из E[X] = θ - 0.5 => θ = x̄ + 0.5
+# Для F2: из M[X] = θ - 0.5 => θ = x̄ + 0.5
 theta_f2 = mean_x + 0.5
 var_f2_theor = (2 * theta_f2 + 1) ** 2 / 12
 As_f2_theor = 0
 Ex_f2_theor = -1.2
 
-# Для F3: из E[X] = 2/θ => θ = 2/x̄
+# Для F3: из M[X] = 2/θ => θ = 2/x̄
 theta_f3 = 2 / mean_x if mean_x > 0 else np.inf
 var_f3_theor = 2 / (theta_f3**2) if theta_f3 != np.inf else np.inf
 As_f3_theor = np.sqrt(2)
 Ex_f3_theor = 3
 
-# Для F4: из E[X] = 2θ/3 => θ = 3x̄/2
+# Для F4: из M[X] = 2θ/3 => θ = 3x̄/2
 theta_f4 = 3 * mean_x / 2
 var_f4_theor = theta_f4**2 / 18
 As_f4_theor = -0.5657  # Точное значение: -2√2/5 * √(5/2) ≈ -0.5657
@@ -238,7 +229,7 @@ Ex_f4_theor = -0.6
 logger.info("\n┌──────────────────────────────────────────────────────────────────────┐")
 logger.info("│           СРАВНЕНИЕ ВЫБОРОЧНЫХ И ТЕОРЕТИЧЕСКИХ ХАРАКТЕРИСТИК        │")
 logger.info("├──────────┬───────────┬───────────┬───────────┬───────────┬──────────┤")
-logger.info("│ Распред. │  Параметр │   E[X]    │   D[X]    │    Aₛ     │    Eₓ    │")
+logger.info("│ Распред. │  Параметр │   M[X]    │   D[X]    │    k₍as₎     │    k₍ex₎    │")
 logger.info("├──────────┼───────────┼───────────┼───────────┼───────────┼──────────┤")
 logger.info(f"│ ВЫБОРКА  │     -     │ {mean_x:9.4f} │ {var_x:9.4f} │ {As:9.4f} │ {Ex:8.4f} │")
 logger.info("├──────────┼───────────┼───────────┼───────────┼───────────┼──────────┤")
@@ -248,9 +239,8 @@ logger.info(f"│ F3 (Гамм)│ θ={theta_f3:.3f}  │ {2 / theta_f3:9.4f} �
 logger.info(f"│ F4 (Степ)│ θ={theta_f4:.3f}  │ {2 * theta_f4 / 3:9.4f} │ {var_f4_theor:9.4f} │ {As_f4_theor:9.4f} │ {Ex_f4_theor:8.4f} │")
 logger.info("└──────────┴───────────┴───────────┴───────────┴───────────┴──────────┘")
 
-# --- 7.6 Вычисление отклонений и выбор гипотезы ---
+# --- 7.5 Вычисление отклонений и выбор гипотезы ---
 logger.info("\n--- 7.5 АНАЛИЗ ОТКЛОНЕНИЙ И ВЫБОР ГИПОТЕЗЫ ---")
-
 
 # Вычисляем суммарное относительное отклонение для каждого распределения
 def calc_deviation(var_theor, As_theor, Ex_theor):
@@ -267,7 +257,7 @@ dev_f3, dev_var_f3, dev_As_f3, dev_Ex_f3 = calc_deviation(var_f3_theor, As_f3_th
 dev_f4, dev_var_f4, dev_As_f4, dev_Ex_f4 = calc_deviation(var_f4_theor, As_f4_theor, Ex_f4_theor)
 
 logger.info("\nОтклонения от теоретических значений:")
-logger.info(f"{'Распред.':<10} | {'ΔD[X]/D':<10} | {'ΔAₛ':<10} | {'ΔEₓ':<10} | {'Σ откл.':<10}")
+logger.info(f"{'Распред.':<10} | {'ΔD[X]/D':<10} | {'Δk₍as₎':<10} | {'Δk₍ex₎':<10} | {'Σ откл.':<10}")
 logger.info("-" * 60)
 logger.info(f"{'F1 (Норм)':<10} | {dev_var_f1:<10.4f} | {dev_As_f1:<10.4f} | {dev_Ex_f1:<10.4f} | {dev_f1:<10.4f}")
 logger.info(f"{'F2 (Равн)':<10} | {dev_var_f2:<10.4f} | {dev_As_f2:<10.4f} | {dev_Ex_f2:<10.4f} | {dev_f2:<10.4f}")
@@ -298,7 +288,7 @@ logger.info(f"  - F3 ([0, +∞)): {'✓ подходит' if support_check['F3']
 logger.info(f"  - F4 ([0, θ]): {'✓ подходит' if support_check['F4'] else '✗ не подходит (x_min < 0)'}")
 
 # Анализ асимметрии
-logger.info(f"\nАнализ асимметрии (Aₛ = {As:.4f}):")
+logger.info(f"\nАнализ асимметрии (k₍as₎ = {As:.4f}):")
 if abs(As) < 0.25:
     logger.info("  -> Распределение близко к симметричному (подходит F1, F2)")
 elif As > 0.5:
@@ -307,7 +297,7 @@ elif As < -0.25:
     logger.info("  -> Отрицательная асимметрия (левый хвост длиннее) - подходит F4")
 
 # Анализ эксцесса
-logger.info(f"\nАнализ эксцесса (Eₓ = {Ex:.4f}):")
+logger.info(f"\nАнализ эксцесса (k₍ex₎ = {Ex:.4f}):")
 if abs(Ex) < 0.5:
     logger.info("  -> Эксцесс близок к нормальному (подходит F1)")
 elif Ex < -0.5:
@@ -315,7 +305,7 @@ elif Ex < -0.5:
 elif Ex > 1:
     logger.info("  -> Положительный эксцесс (островершинное) - подходит F3")
 
-# --- 7.7 ИТОГОВЫЙ ВЫВОД ---
+# --- ИТОГОВЫЙ ВЫВОД ---
 logger.info("\n" + "=" * 70)
 logger.info("                          ИТОГОВЫЙ ВЫВОД")
 logger.info("=" * 70)
@@ -356,18 +346,18 @@ if final_choice == "F1":
 elif final_choice == "F2":
     logger.info(f"  • Равномерное распределение на интервале [-1, {2 * theta_f2:.4f}]")
     logger.info(f"  • Плотность постоянна: f(x) = 1/{2 * theta_f2 + 1:.4f}")
-    logger.info("  • Симметричное (Aₛ = 0), плосковершинное (Eₓ = -1.2)")
+    logger.info("  • Симметричное (k₍as₎ = 0), плосковершинное (k₍ex₎ = -1.2)")
 elif final_choice == "F3":
     logger.info(f"  • Гамма-распределение (Эрланга 2-го порядка) с параметром θ = {theta_f3:.4f}")
     logger.info("  • Область определения: x ≥ 0")
-    logger.info("  • Положительная асимметрия (Aₛ ≈ 1.414) - правый хвост длиннее")
-    logger.info("  • Положительный эксцесс (Eₓ = 3) - островершинное")
+    logger.info("  • Положительная асимметрия (k₍as₎ ≈ 1.414) - правый хвост длиннее")
+    logger.info("  • Положительный эксцесс (k₍ex₎ = 3) - островершинное")
 elif final_choice == "F4":
     logger.info(f"  • Степенное распределение с параметром θ = {theta_f4:.4f}")
     logger.info(f"  • Область определения: x ∈ [0, {theta_f4:.4f}]")
     logger.info(f"  • Плотность линейно возрастает от 0 до 2/θ = {2 / theta_f4:.4f}")
-    logger.info("  • Отрицательная асимметрия (Aₛ ≈ -0.57) - левый хвост длиннее")
-    logger.info("  • Отрицательный эксцесс (Eₓ ≈ -0.6) - плосковершинное")
+    logger.info("  • Отрицательная асимметрия (k₍as₎ ≈ -0.57) - левый хвост длиннее")
+    logger.info("  • Отрицательный эксцесс (k₍ex₎ ≈ -0.6) - плосковершинное")
 
 # Сохраняем выбранное распределение для дальнейших заданий
 hypothesis = final_choice
@@ -402,18 +392,19 @@ n1 = np.sum(signs == "+")
 n2 = np.sum(signs == "-")
 ks = 1 + np.sum(signs[1:] != signs[:-1])
 
-mean_ks = (2 * n1 * n2) / (n1 + n2) + 1
-var_ks = (2 * n1 * n2 * (2 * n1 * n2 - n1 - n2)) / ((n1 + n2) ** 2 * (n1 + n2 - 1))
-std_ks = np.sqrt(var_ks)
+numerator = (ks - ((2 * n1 * n2) / (n1 + n2)) - 1) - 0.5
+denominator = (2 * n1 * n2 * (2 * n1 * n2 - (n1 + n2))) / ((n1 + n2)**2 * (n1 + n2 - 1))
+sqrt_denom = np.sqrt(denominator)
 
-z_calc_series = (ks - mean_ks - 0.5) / std_ks if ks < mean_ks else (ks - mean_ks + 0.5) / std_ks
+z_calc_series = numerator / sqrt_denom
 
-logger.info(f"\n1. Число элементов > медианы (n1) = {n1}")
+logger.info(f"\nМедиана: {median_x}")
+logger.info(f"1. Число элементов > медианы (n1) = {n1}")
 logger.info(f"2. Число элементов < медианы (n2) = {n2}")
 logger.info(f"3. Количество серий (KS) = {ks}")
-logger.info(f"4. M[KS] = (2·n1·n2)/(n1+n2) + 1 = {mean_ks:.4f}")
-logger.info(f"5. σ[KS] = √[(2n1n2(2n1n2-n1-n2))/((n1+n2)²·(n1+n2-1))] = {std_ks:.4f}")
-logger.info(f"6. Z_выч = (KS - M[KS] ± 0.5) / σ[KS] = {z_calc_series:.4f}")
+logger.info(f"4. Числитель = (KS - (2·n1·n2)/(n1+n2) - 1) - 0.5 = {numerator:.4f}")
+logger.info(f"5. Знаменатель = √[(2n1n2(2n1n2-(n1+n2)))/((n1+n2)²·(n1+n2-1))] = {sqrt_denom:.4f}")
+logger.info(f"6. Z_выч = {numerator:.4f} / {sqrt_denom:.4f} = {z_calc_series:.4f}")
 logger.info("7. Критическое Z_крит (α=0.05) = 1.96")
 logger.info(f"\nВЫВОД: Выборка {'СЛУЧАЙНА' if abs(z_calc_series) < 1.96 else 'НЕ СЛУЧАЙНА'} (т.к. |Z| = {abs(z_calc_series):.4f} {'<' if abs(z_calc_series) < 1.96 else '>'} 1.96)")
 
@@ -500,7 +491,7 @@ else:
 # ЗАДАНИЕ 10. КРИТЕРИЙ ХИ-КВАДРАТ
 # =============================================================================
 logger.info("\n" + "=" * 70)
-logger.info(f"[ЗАДАНИЕ 10] КРИТЕРИЙ ХИ-КВАДРАТ (α=0.1, Распределение {hypothesis})")
+logger.info(f"[ЗАДАНИЕ 10] КРИТЕРИЙ ХИ-КВАДРАТ ПИРСОНА (α=0.1, Распределение {hypothesis})")
 logger.info("=" * 70)
 
 k_sturges = int(np.log2(n)) + 1
@@ -575,7 +566,7 @@ logger.info("-" * 70)
 logger.info(f"\n1. Хи-квадрат выч = Σ[(nᵢ-nᵢт)²/nᵢт] = {chi_sq:.4f}")
 logger.info(f"2. Число оцениваемых параметров r = {r}")
 logger.info(f"3. Степени свободы ν = k - r - 1 = {k_sturges} - {r} - 1 = {nu}")
-logger.info(f"4. Для α=0.1 и ν={nu} найди χ²_крит в таблице")
+logger.info(f"4. Для α=0.1 и ν={nu} находим χ²_крит в таблице")
 
 # =============================================================================
 # ЗАДАНИЕ 11. ГРАФИК ГИСТОГРАММЫ И ПЛОТНОСТИ
@@ -630,21 +621,21 @@ logger.info("=" * 70)
 mid = n // 2
 group1 = data[:mid]
 group2 = data[mid:]
-n1_mw, n2_mw = len(group1), len(group2)
+n_mw, m_mw = len(group1), len(group2)
 
 comparison = group1[:, np.newaxis] < group2
 ties = group1[:, np.newaxis] == group2
 u_stat = np.sum(comparison) + 0.5 * np.sum(ties)
 
-e_u = (n1_mw * n2_mw) / 2
-s_u = np.sqrt((n1_mw * n2_mw * (n1_mw + n2_mw + 1)) / 12)
-z_mw = (u_stat - e_u) / s_u
+numerator_mw = u_stat - (n_mw * m_mw) / 2
+denominator_mw = np.sqrt((n_mw * m_mw * (n_mw + m_mw + 1)) / 12)
+z_mw = numerator_mw / denominator_mw
 
-logger.info(f"\n1. Выборка разделена на две части: n1 = {n1_mw}, n2 = {n2_mw}")
+logger.info(f"\n1. Выборка разделена на две части: n1 = {n_mw}, n2 = {m_mw}")
 logger.info(f"2. Статистика U (число инверсий) = {u_stat}")
-logger.info(f"3. M[U] = (n1·n2)/2 = {e_u:.2f}")
-logger.info(f"4. σ[U] = √[(n1·n2·(n1+n2+1))/12] = {s_u:.4f}")
-logger.info(f"5. Z_выч = (U - M[U]) / σ[U] = {z_mw:.4f}")
+logger.info(f"3. Числитель = U - (n·m)/2 = {numerator_mw:.2f}")
+logger.info(f"4. Знаменатель = √[(n·m·(n+m+1))/12] = {denominator_mw:.4f}")
+logger.info(f"5. Z_выч = (U - (n·m)/2) / √[(n·m·(n+m+1))/12] = {z_mw:.4f}")
 logger.info("6. Критическое Z_крит (α=0.01, двустороннее) = 2.57")
 logger.info(f"\nВЫВОД: Выборки {'ОДНОРОДНЫ' if abs(z_mw) < 2.57 else 'НЕОДНОРОДНЫ'} (т.к. |Z| = {abs(z_mw):.4f} {'<' if abs(z_mw) < 2.57 else '>'} 2.57)")
 
