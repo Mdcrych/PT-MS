@@ -131,10 +131,10 @@ k_sturges = int(np.log2(n)) + 1
 logger.info(f"Число интервалов (формула Стэрджеса): k = [log₂({n})] + 1 = {k_sturges}")
 
 # Построение гистограммы
-fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+fig, axes = plt.subplots(1, 1, figsize=(10, 5))
 
 # Гистограмма относительных частот (density=False, weights для относительных частот)
-counts, bins, _ = axes[0].hist(
+counts, bins, _ = axes.hist(
     data,
     bins=k_sturges,
     weights=np.ones(n) / n,  # Относительные частоты (сумма = 1)
@@ -142,19 +142,10 @@ counts, bins, _ = axes[0].hist(
     color="steelblue",
     alpha=0.7,
 )
-axes[0].set_xlabel("x", fontsize=11)
-axes[0].set_ylabel("Относительная частота (nᵢ/n)", fontsize=11)
-axes[0].set_title("Гистограмма относительных частот", fontsize=12)
-axes[0].grid(True, alpha=0.3)
-
-# Гистограмма плотности (для сравнения с теоретическими распределениями)
-counts_density, _, _ = axes[1].hist(
-    data, bins=k_sturges, density=True, edgecolor="black", color="skyblue", alpha=0.7
-)
-axes[1].set_xlabel("x", fontsize=11)
-axes[1].set_ylabel("Плотность вероятности f(x)", fontsize=11)
-axes[1].set_title("Гистограмма (плотность) для сравнения с распределениями", fontsize=12)
-axes[1].grid(True, alpha=0.3)
+axes.set_xlabel("x", fontsize=11)
+axes.set_ylabel("Относительная частота (nᵢ/n)", fontsize=11)
+axes.set_title("Гистограмма относительных частот", fontsize=12)
+axes.grid(True, alpha=0.3)
 
 plt.tight_layout()
 fig.savefig("histogram_task7.png", dpi=150)
@@ -162,12 +153,12 @@ plt.close(fig)
 logger.info("-> Гистограмма сохранена в 'histogram_task7.png'")
 
 # Таблица интервалов и частот
-logger.info(f"\n{'Интервал':<20} | {'nᵢ':<6} | {'Отн.частота':<12} | {'Плотность':<12}")
+logger.info(f"\n{'Интервал':<20} | {'nᵢ':<6} | {'Отн.частота':<12}")
 logger.info("-" * 60)
 bin_width = bins[1] - bins[0]
 for i in range(k_sturges):
     ni = int(counts[i] * n + 0.5)  # Восстанавливаем абсолютную частоту
-    logger.info(f"[{bins[i]:7.3f}; {bins[i + 1]:7.3f}) | {ni:<6} | {counts[i]:<12.4f} | {counts_density[i]:<12.4f}")
+    logger.info(f"[{bins[i]:7.3f}; {bins[i + 1]:7.3f}) | {ni:<6} | {counts[i]:<12.4f}")
 
 # --- 7.3 Теоретические характеристики распределений F1-F4 ---
 logger.info("\n--- 7.3 ТЕОРЕТИЧЕСКИЕ ХАРАКТЕРИСТИКИ РАСПРЕДЕЛЕНИЙ ---")
@@ -401,18 +392,19 @@ n1 = np.sum(signs == "+")
 n2 = np.sum(signs == "-")
 ks = 1 + np.sum(signs[1:] != signs[:-1])
 
-mean_ks = (2 * n1 * n2) / (n1 + n2) + 1
-var_ks = (2 * n1 * n2 * (2 * n1 * n2 - n1 - n2)) / ((n1 + n2) ** 2 * (n1 + n2 - 1))
-std_ks = np.sqrt(var_ks)
+numerator = (ks - ((2 * n1 * n2) / (n1 + n2)) - 1) - 0.5
+denominator = (2 * n1 * n2 * (2 * n1 * n2 - (n1 + n2))) / ((n1 + n2)**2 * (n1 + n2 - 1))
+sqrt_denom = np.sqrt(denominator)
 
-z_calc_series = (ks - mean_ks - 0.5) / std_ks if ks < mean_ks else (ks - mean_ks + 0.5) / std_ks
+z_calc_series = numerator / sqrt_denom
 
-logger.info(f"\n1. Число элементов > медианы (n1) = {n1}")
+logger.info(f"\nМедиана: {median_x}")
+logger.info(f"1. Число элементов > медианы (n1) = {n1}")
 logger.info(f"2. Число элементов < медианы (n2) = {n2}")
 logger.info(f"3. Количество серий (KS) = {ks}")
-logger.info(f"4. M[KS] = (2·n1·n2)/(n1+n2) + 1 = {mean_ks:.4f}")
-logger.info(f"5. σ[KS] = √[(2n1n2(2n1n2-n1-n2))/((n1+n2)²·(n1+n2-1))] = {std_ks:.4f}")
-logger.info(f"6. Z_выч = (KS - M[KS] ± 0.5) / σ[KS] = {z_calc_series:.4f}")
+logger.info(f"4. Числитель = (KS - (2·n1·n2)/(n1+n2) - 1) - 0.5 = {numerator:.4f}")
+logger.info(f"5. Знаменатель = √[(2n1n2(2n1n2-(n1+n2)))/((n1+n2)²·(n1+n2-1))] = {sqrt_denom:.4f}")
+logger.info(f"6. Z_выч = {numerator:.4f} / {sqrt_denom:.4f} = {z_calc_series:.4f}")
 logger.info("7. Критическое Z_крит (α=0.05) = 1.96")
 logger.info(f"\nВЫВОД: Выборка {'СЛУЧАЙНА' if abs(z_calc_series) < 1.96 else 'НЕ СЛУЧАЙНА'} (т.к. |Z| = {abs(z_calc_series):.4f} {'<' if abs(z_calc_series) < 1.96 else '>'} 1.96)")
 
@@ -629,21 +621,21 @@ logger.info("=" * 70)
 mid = n // 2
 group1 = data[:mid]
 group2 = data[mid:]
-n1_mw, n2_mw = len(group1), len(group2)
+n_mw, m_mw = len(group1), len(group2)
 
 comparison = group1[:, np.newaxis] < group2
 ties = group1[:, np.newaxis] == group2
 u_stat = np.sum(comparison) + 0.5 * np.sum(ties)
 
-e_u = (n1_mw * n2_mw) / 2
-s_u = np.sqrt((n1_mw * n2_mw * (n1_mw + n2_mw + 1)) / 12)
-z_mw = (u_stat - e_u) / s_u
+numerator_mw = u_stat - (n_mw * m_mw) / 2
+denominator_mw = np.sqrt((n_mw * m_mw * (n_mw + m_mw + 1)) / 12)
+z_mw = numerator_mw / denominator_mw
 
-logger.info(f"\n1. Выборка разделена на две части: n1 = {n1_mw}, n2 = {n2_mw}")
+logger.info(f"\n1. Выборка разделена на две части: n1 = {n_mw}, n2 = {m_mw}")
 logger.info(f"2. Статистика U (число инверсий) = {u_stat}")
-logger.info(f"3. M[U] = (n1·n2)/2 = {e_u:.2f}")
-logger.info(f"4. σ[U] = √[(n1·n2·(n1+n2+1))/12] = {s_u:.4f}")
-logger.info(f"5. Z_выч = (U - M[U]) / σ[U] = {z_mw:.4f}")
+logger.info(f"3. Числитель = U - (n·m)/2 = {numerator_mw:.2f}")
+logger.info(f"4. Знаменатель = √[(n·m·(n+m+1))/12] = {denominator_mw:.4f}")
+logger.info(f"5. Z_выч = (U - (n·m)/2) / √[(n·m·(n+m+1))/12] = {z_mw:.4f}")
 logger.info("6. Критическое Z_крит (α=0.01, двустороннее) = 2.57")
 logger.info(f"\nВЫВОД: Выборки {'ОДНОРОДНЫ' if abs(z_mw) < 2.57 else 'НЕОДНОРОДНЫ'} (т.к. |Z| = {abs(z_mw):.4f} {'<' if abs(z_mw) < 2.57 else '>'} 2.57)")
 
